@@ -1,4 +1,4 @@
-const coreUrl = process.env.TCLOUD_CORE_URL ?? "http://127.0.0.1:8787";
+import { coreFetch } from "@/lib/tcloudCoreServer";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,8 +24,8 @@ async function proxyMedia(request: Request, context: RouteContext) {
 
   let upstream: Response;
   try {
-    upstream = await fetch(
-      `${coreUrl}/api/v1/media/${encodeURIComponent(id)}`,
+    upstream = await coreFetch(
+      `/api/v1/media/${encodeURIComponent(id)}`,
       {
         method: request.method === "HEAD" ? "HEAD" : "GET",
         headers: upstreamHeaders,

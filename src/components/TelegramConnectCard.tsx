@@ -73,15 +73,13 @@ export function TelegramConnectCard() {
   }
 
   useEffect(() => {
-    const savedPhone = window.localStorage.getItem(
-      "tcloud.telegram.phone",
-    );
-
-    if (savedPhone) {
-      setPhone(savedPhone);
-    }
-
-    void refresh();
+    void (async () => {
+      await refresh();
+      const savedPhone = window.localStorage.getItem(
+        "tcloud.telegram.phone",
+      );
+      if (savedPhone) setPhone(savedPhone);
+    })();
   }, []);
 
   useEffect(() => {

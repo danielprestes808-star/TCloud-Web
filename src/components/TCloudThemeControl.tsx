@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import {
   getTCloudTheme,
   setTCloudTheme,
@@ -15,11 +15,14 @@ const options: Array<{ value: ThemeValue; label: string }> = [
 ];
 
 export default function TCloudThemeControl() {
-  const [value, setValue] = useState<ThemeValue>("system");
-
-  useEffect(() => {
-    setValue(getTCloudTheme());
-  }, []);
+  const value = useSyncExternalStore(
+    (notify) => {
+      window.addEventListener("tcloud-theme-changed", notify);
+      return () => window.removeEventListener("tcloud-theme-changed", notify);
+    },
+    getTCloudTheme,
+    () => "system",
+  );
 
   return (
     <section className="tc-settings-theme-card">
@@ -35,7 +38,6 @@ export default function TCloudThemeControl() {
             type="button"
             aria-pressed={value === option.value}
             onClick={() => {
-              setValue(option.value);
               setTCloudTheme(option.value);
             }}
           >

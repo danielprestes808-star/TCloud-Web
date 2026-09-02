@@ -27,6 +27,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import {
   useCallback,
   useEffect,
@@ -236,13 +237,6 @@ export function TCloudShell() {
       const data = await filesResult.value.json();
       const nextItems = Array.isArray(data) ? data : [];
       setItems(nextItems);
-      try {
-        sessionStorage.setItem(
-          "tcloud:web:items-cache:v1",
-          JSON.stringify(nextItems),
-        );
-      } catch {
-      }
     } else {
       setItems([]);
     }
@@ -258,19 +252,8 @@ export function TCloudShell() {
   }, []);
 
   useEffect(() => {
-    try {
-      const cached = sessionStorage.getItem(
-        "tcloud:web:items-cache:v1",
-      );
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) {
-          setItems(parsed);
-        }
-      }
-    } catch {
-    }
-    void loadAll();
+    const timer = window.setTimeout(() => void loadAll(), 0);
+    return () => window.clearTimeout(timer);
   }, [loadAll]);
 
   useEffect(() => {
@@ -1063,10 +1046,11 @@ async function createFolderIn(parentId: string) {
                       onPointerEnter={() => !folder && warmWebMedia(item)}
                     >
                       {!folder && item.kind === "image" ? (
-                        <img
+                        <Image
                           alt=""
-                          loading="lazy"
-                          decoding="async"
+                          height={240}
+                          unoptimized
+                          width={320}
                           src={`/api/core/media/${encodeURIComponent(item.id)}`}
                           style={{ width: "100%", height: "100%", objectFit: "cover" }}
                         />
@@ -1280,6 +1264,14 @@ async function createFolderIn(parentId: string) {
             {visibleItems.length}{" "}
             {visibleItems.length === 1 ? "item" : "itens"}
           </span>
+          <button
+            type="button"
+            disabled={!indexStatus.queueReady || indexBusy}
+            onClick={() => void startIndex()}
+          >
+            <RefreshCw className={indexBusy ? "spin" : undefined} size={14} />
+            {indexBusy ? "Atualizando…" : "Atualizar agora"}
+          </button>
           <span>
             Atualização automática ativa · Último índice:{" "}
             {indexStatus.lastStatus ?? "ainda não executado"}

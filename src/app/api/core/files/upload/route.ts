@@ -1,5 +1,6 @@
-const coreUrl =
-  process.env.TCLOUD_CORE_URL ?? "http://127.0.0.1:8787";
+import { coreFetch } from "@/lib/tcloudCoreServer";
+
+const MAX_VERCEL_UPLOAD_BYTES = 4 * 1024 * 1024;
 
 export const dynamic = "force-dynamic";
 
@@ -23,25 +24,46 @@ export async function POST(request: Request) {
 
     const contentType =
       request.headers.get("content-type") ?? "application/octet-stream";
-    const body = await request.arrayBuffer();
+    const contentLength = Number(request.headers.get("content-length"));
 
-    if (body.byteLength === 0) {
+    if (!Number.isSafeInteger(contentLength) || contentLength <= 0) {
+      return Response.json(
+        { ok: false, message: "Tamanho do arquivo ausente ou inválido." },
+        { status: 411 },
+      );
+    }
+
+    if (contentLength > MAX_VERCEL_UPLOAD_BYTES) {
+      return Response.json(
+        {
+          ok: false,
+          message: "O envio pela Web aceita até 4 MB. Use o desktop ou mobile para arquivos maiores.",
+        },
+        { status: 413 },
+      );
+    }
+
+    if (!request.body) {
       return Response.json(
         { ok: false, message: "Arquivo vazio." },
         { status: 400 },
       );
     }
 
-    const response = await fetch(`${coreUrl}/api/v1/files/upload`, {
+    const uploadInit: RequestInit & { duplex: "half" } = {
       method: "POST",
       headers: {
         "content-type": contentType,
+        "content-length": String(contentLength),
         "x-tcloud-parent-id": parentId,
         "x-tcloud-file-name": fileName,
       },
-      body,
+      body: request.body,
+      duplex: "half",
       cache: "no-store",
-    });
+    };
+
+    const response = await coreFetch("/api/v1/files/upload", uploadInit);
 
     const data = await response.json().catch(() => ({
       ok: false,

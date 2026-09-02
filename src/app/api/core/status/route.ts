@@ -1,12 +1,11 @@
-const coreUrl =
-  process.env.TCLOUD_CORE_URL ?? "http://127.0.0.1:8787";
+import { coreFetch } from "@/lib/tcloudCoreServer";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const response = await fetch(
-      `${coreUrl}/api/v1/status`,
+    const response = await coreFetch(
+      "/api/v1/status",
       { cache: "no-store" },
     );
 
