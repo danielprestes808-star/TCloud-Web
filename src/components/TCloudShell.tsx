@@ -568,6 +568,19 @@ export function TCloudShell() {
       }
     }
 
+    const galleryRoot = logicalFolders.find(
+      (folder) => folderDisplayName(folder.name).toLocaleLowerCase("pt-BR") === "galeria",
+    );
+    if (galleryRoot) {
+      for (const folder of logicalFolders) {
+        const fullName = folderDisplayName(folder.name);
+        if (fullName.toLocaleLowerCase("pt-BR").startsWith("galeria / ")) {
+          folder.name = fullName.slice("Galeria / ".length).trim();
+          folder.parentId = galleryRoot.id;
+        }
+      }
+    }
+
     return {
       folders: logicalFolders,
       folderMap: new Map(logicalFolders.map((folder) => [folder.id, folder])),
@@ -1199,7 +1212,9 @@ async function createFolderIn(parentId: string) {
               <p>
                 {activeNav === "Arquivos"
                   ? currentFolder
-                    ? "Arquivos deste local no TCloud."
+                    ? currentFolder.name.toLocaleLowerCase("pt-BR") === "galeria"
+                      ? "Subpastas da galeria, unificadas como no TCloud Mobile."
+                      : "Arquivos deste local no TCloud."
                     : "Pastas e fóruns sincronizados pelo Core."
                   : activeNav === "Lixeira"
                     ? "Arquivos removidos podem ser restaurados."
@@ -1279,6 +1294,11 @@ async function createFolderIn(parentId: string) {
                       folder ? "is-folder" : ""
                     }`}
                     key={item.id}
+                    onClick={() => {
+                      if (folder && activeNav === "Arquivos") {
+                        setCurrentFolderId(item.id);
+                      }
+                    }}
                     onDoubleClick={() => {
                       if (
                         folder &&
@@ -1423,6 +1443,11 @@ async function createFolderIn(parentId: string) {
                       folder ? "is-folder" : ""
                     }`}
                     key={item.id}
+                    onClick={() => {
+                      if (folder && activeNav === "Arquivos") {
+                        setCurrentFolderId(item.id);
+                      }
+                    }}
                     onDoubleClick={() => {
                       if (
                         folder &&
