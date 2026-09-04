@@ -253,9 +253,32 @@ export function TCloudShell() {
   const [pairedDevices, setPairedDevices] = useState<PairedDevice[]>([]);
   const [pairingCode, setPairingCode] = useState<PairingCode | null>(null);
   const [pairingBusy, setPairingBusy] = useState(false);
+  const [previewItem, setPreviewItem] = useState<TCloudItem | null>(null);
+  const [mediaRetry, setMediaRetry] = useState(0);
+  const [mediaError, setMediaError] = useState(false);
+  const [failedThumbnails, setFailedThumbnails] = useState<Set<string>>(new Set());
   const [uploadParentId, setUploadParentId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const liveRevisionRef = useRef<string | null>(null);
+
+  const openItem = useCallback((item: TCloudItem) => {
+    if (item.kind === "folder") {
+      setCurrentFolderId(item.id);
+      return;
+    }
+    setMediaError(false);
+    setMediaRetry(0);
+    setPreviewItem(item);
+  }, []);
+
+  useEffect(() => {
+    if (!previewItem) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPreviewItem(null);
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [previewItem]);
 
   const loadDevices = useCallback(async () => {
     const response = await fetch("/api/core/devices", { cache: "no-store" });
@@ -1294,11 +1317,7 @@ async function createFolderIn(parentId: string) {
                       folder ? "is-folder" : ""
                     }`}
                     key={item.id}
-                    onClick={() => {
-                      if (folder && activeNav === "Arquivos") {
-                        setCurrentFolderId(item.id);
-                      }
-                    }}
+                    onClick={() => openItem(item)}
                     onDoubleClick={() => {
                       if (
                         folder &&
@@ -1312,23 +1331,27 @@ async function createFolderIn(parentId: string) {
                       className="web-file-preview"
                       onPointerEnter={() => !folder && warmWebMedia(item)}
                     >
-                      {!folder && item.kind === "image" ? (
+                      {!folder && item.kind === "image" && !failedThumbnails.has(item.id) ? (
                         <Image
                           alt=""
                           height={240}
                           unoptimized
                           width={320}
                           src={`/api/core/media/${encodeURIComponent(item.id)}`}
+                          onError={() => setFailedThumbnails((current) => new Set(current).add(item.id))}
                           style={{ width: "100%", height: "100%", objectFit: "cover" }}
                         />
-                      ) : !folder && item.kind === "video" ? (
-                        <video
-                          muted
-                          playsInline
-                          preload="metadata"
-                          src={`/api/core/media/${encodeURIComponent(item.id)}`}
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                        />
+                      ) : !folder && item.kind === "video" && !failedThumbnails.has(item.id) ? (
+                        <div className="web-video-thumbnail">
+                          <Film size={34} strokeWidth={1.5} />
+                          <video
+                            muted
+                            playsInline
+                            preload="metadata"
+                            src={`/api/core/media/${encodeURIComponent(item.id)}`}
+                            onError={() => setFailedThumbnails((current) => new Set(current).add(item.id))}
+                          />
+                        </div>
                       ) : (
                         <Icon size={38} strokeWidth={1.55} />
                       )}
@@ -1351,7 +1374,7 @@ async function createFolderIn(parentId: string) {
                           </button>
 
                           {menuItemId === item.id && (
-                            <div className="web-item-menu">
+                            <div className="web-item-menu" onClick={(event) => event.stopPropagation()}>
                               {activeNav === "Lixeira" ? (
                                 <button
                                   onClick={() =>
@@ -1443,11 +1466,7 @@ async function createFolderIn(parentId: string) {
                       folder ? "is-folder" : ""
                     }`}
                     key={item.id}
-                    onClick={() => {
-                      if (folder && activeNav === "Arquivos") {
-                        setCurrentFolderId(item.id);
-                      }
-                    }}
+                    onClick={() => openItem(item)}
                     onDoubleClick={() => {
                       if (
                         folder &&
@@ -1465,20 +1484,21 @@ async function createFolderIn(parentId: string) {
                         <div className="web-list-action-wrap">
                           <button
                             className="web-row-more"
-                            onClick={() =>
+                            onClick={(event) => {
+                              event.stopPropagation();
                               setMenuItemId(
                                 menuItemId === item.id
                                   ? null
                                   : item.id,
-                              )
-                            }
+                              );
+                            }}
                             type="button"
                           >
                             <MoreHorizontal size={16} />
                           </button>
 
                           {menuItemId === item.id && (
-                            <div className="web-item-menu is-list">
+                            <div className="web-item-menu is-list" onClick={(event) => event.stopPropagation()}>
                               {activeNav === "Lixeira" ? (
                                 <button
                                   onClick={() =>
@@ -1607,6 +1627,61 @@ async function createFolderIn(parentId: string) {
                   ))}
                   {pairedDevices.length === 0 && <small>Nenhum aparelho pareado ainda.</small>}
                 </div>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {previewItem && (
+          <div className="web-viewer-backdrop" role="presentation" onMouseDown={() => setPreviewItem(null)}>
+            <section className="web-viewer" role="dialog" aria-modal="true" aria-label={`Visualizar ${previewItem.name}`} onMouseDown={(event) => event.stopPropagation()}>
+              <header>
+                <div>
+                  {previewItem.kind === "image" ? <FileImage size={20} /> : previewItem.kind === "video" ? <Film size={20} /> : <FileText size={20} />}
+                  <span><strong>{previewItem.name}</strong><small>{formatBytes(previewItem.size)}</small></span>
+                </div>
+                <div className="web-viewer-actions">
+                  <a href={`/api/core/media/${encodeURIComponent(previewItem.id)}`} download={previewItem.name} title="Baixar arquivo"><CloudDownload size={18} /></a>
+                  <button type="button" aria-label="Fechar visualizador" onClick={() => setPreviewItem(null)}><X size={20} /></button>
+                </div>
+              </header>
+              <div className="web-viewer-stage">
+                {mediaError ? (
+                  <div className="web-viewer-error">
+                    <CloudDownload size={40} />
+                    <strong>Não foi possível abrir esta mídia</strong>
+                    <span>O arquivo pode ainda estar sendo recuperado do Telegram.</span>
+                    <button type="button" onClick={() => { setMediaError(false); setMediaRetry((value) => value + 1); }}><RefreshCw size={16} />Tentar novamente</button>
+                  </div>
+                ) : previewItem.kind === "image" ? (
+                  <Image
+                    key={`${previewItem.id}:${mediaRetry}`}
+                    alt={previewItem.name}
+                    width={1600}
+                    height={1200}
+                    unoptimized
+                    priority
+                    src={`/api/core/media/${encodeURIComponent(previewItem.id)}?retry=${mediaRetry}`}
+                    onError={() => setMediaError(true)}
+                  />
+                ) : previewItem.kind === "video" ? (
+                  <video
+                    key={`${previewItem.id}:${mediaRetry}`}
+                    controls
+                    autoPlay
+                    playsInline
+                    preload="auto"
+                    src={`/api/core/media/${encodeURIComponent(previewItem.id)}?retry=${mediaRetry}`}
+                    onError={() => setMediaError(true)}
+                  />
+                ) : (
+                  <div className="web-viewer-error">
+                    <FileText size={48} />
+                    <strong>Visualização não disponível</strong>
+                    <span>Baixe o arquivo para abri-lo no aplicativo correspondente.</span>
+                    <a className="web-viewer-download" href={`/api/core/media/${encodeURIComponent(previewItem.id)}`} download={previewItem.name}><CloudDownload size={16} />Baixar arquivo</a>
+                  </div>
+                )}
               </div>
             </section>
           </div>

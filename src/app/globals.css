@@ -2679,3 +2679,169 @@ button[data-primary="true"] {
     font-size: 14px;
   }
 }
+
+/* TCloud Web 0.3: explorer visual e visualizador de mídia. */
+.web-topbar {
+  min-height: 68px;
+  padding-inline: clamp(16px, 2.2vw, 32px);
+  background: color-mix(in srgb, var(--tc-bg) 88%, transparent);
+}
+
+.web-search {
+  height: 44px;
+  border-color: transparent;
+  border-radius: 14px;
+  background: var(--tc-surface-2) !important;
+}
+
+.web-commandbar {
+  min-height: 60px;
+  padding-inline: clamp(16px, 2.2vw, 32px);
+  background: var(--tc-bg);
+}
+
+.web-primary-actions button {
+  height: 38px;
+  padding-inline: 14px;
+  border-radius: 11px;
+  cursor: pointer;
+}
+
+.web-content {
+  padding: clamp(20px, 2.4vw, 36px);
+}
+
+.web-content-heading {
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.web-content-heading h1 {
+  font-size: clamp(24px, 2vw, 30px);
+  letter-spacing: -.035em;
+}
+
+.web-content-heading p {
+  margin-top: 7px;
+  font-size: 13px;
+}
+
+.web-file-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.web-file-card {
+  border-radius: 17px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+}
+
+.web-file-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--tc-primary) 48%, var(--tc-border));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .14);
+}
+
+.web-file-preview {
+  height: 152px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--tc-surface-2) 88%, var(--tc-bg));
+}
+
+.web-file-card.is-folder .web-file-preview {
+  height: 132px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--tc-primary) 12%, var(--tc-surface)), var(--tc-surface-2));
+}
+
+.web-file-meta {
+  gap: 6px;
+  padding: 13px 14px 9px;
+}
+
+.web-file-meta strong { font-size: 13px; }
+.web-file-meta span { font-size: 11px; }
+.web-sync-state { padding: 0 14px 13px; font-size: 10px; }
+
+.web-video-thumbnail {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+}
+
+.web-video-thumbnail > svg { position: absolute; opacity: .65; }
+.web-video-thumbnail video { position: absolute; width: 100%; height: 100%; object-fit: cover; }
+
+.web-viewer-backdrop {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  display: grid;
+  padding: clamp(8px, 2vw, 24px);
+  place-items: center;
+  background: rgba(3, 7, 14, .86);
+  backdrop-filter: blur(10px);
+}
+
+.web-viewer {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(1180px, 100%);
+  height: min(820px, calc(100dvh - 24px));
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 20px;
+  background: #090d15;
+  color: #f5f7fa;
+  box-shadow: 0 30px 80px rgba(0,0,0,.46);
+}
+
+.web-viewer > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 66px;
+  padding: 10px 14px 10px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+
+.web-viewer > header > div,
+.web-viewer > header span,
+.web-viewer-actions { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.web-viewer > header span { display: grid; gap: 2px; }
+.web-viewer > header strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.web-viewer > header small { color: #9ca7b7; }
+.web-viewer-actions a,
+.web-viewer-actions button {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(255,255,255,.08);
+  color: white;
+  cursor: pointer;
+}
+
+.web-viewer-stage { position: relative; display: grid; min-height: 0; place-items: center; overflow: hidden; }
+.web-viewer-stage > img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.web-viewer-stage > video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+.web-viewer-error { display: grid; max-width: 430px; padding: 28px; place-items: center; gap: 11px; color: #aeb8c7; text-align: center; }
+.web-viewer-error strong { color: white; font-size: 18px; }
+.web-viewer-error button,
+.web-viewer-download { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; padding: 10px 15px; border: 0; border-radius: 11px; background: var(--tc-primary); color: white; text-decoration: none; cursor: pointer; }
+
+@media (max-width: 680px) {
+  .web-topbar { min-height: 58px; }
+  .web-commandbar { overflow-x: auto; }
+  .web-primary-actions { min-width: max-content; }
+  .web-file-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .web-file-preview { height: 118px; }
+  .web-file-card.is-folder .web-file-preview { height: 104px; }
+  .web-viewer-backdrop { padding: 0; }
+  .web-viewer { width: 100%; height: 100dvh; border: 0; border-radius: 0; }
+}
