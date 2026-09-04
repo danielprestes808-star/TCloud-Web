@@ -217,6 +217,16 @@ button {
   cursor: pointer;
 }
 
+.web-pairing-card strong { display: flex; align-items: center; gap: 8px; }
+.web-pairing-code { display: grid; gap: 2px; padding: 14px; border-radius: 14px; background: color-mix(in srgb, var(--tc-accent, #4f76d9) 14%, transparent); text-align: center; }
+.web-pairing-code b { font-size: 1.75rem; letter-spacing: .16em; }
+.web-pairing-code small { opacity: .72; }
+.web-device-list { display: grid; gap: 8px; }
+.web-device-list > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
+.web-device-list span { display: grid; gap: 2px; }
+.web-device-list small { opacity: .68; }
+.web-device-list button { width: auto; padding: 7px 10px; color: #d84f4f; }
+
 .web-insight-list {
   display: grid;
   gap: 8px;

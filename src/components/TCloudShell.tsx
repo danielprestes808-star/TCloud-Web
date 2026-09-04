@@ -29,6 +29,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  Smartphone,
   Star,
   Trash2,
   Upload,
@@ -120,6 +121,8 @@ const navigation = [
 type ActivityItem = { id: string; fileId?: string; action: string; detail?: string; createdAt: string };
 type DuplicateGroup = { signature: string; reclaimableBytes: number; files: TCloudItem[] };
 type StorageBreakdown = { totalBytes: number; imageBytes: number; videoBytes: number; audioBytes: number; documentBytes: number; otherBytes: number; largestFiles: TCloudItem[] };
+type PairedDevice = { id: string; name: string; platform: string; appVersion?: string; lastSeenAt?: string };
+type PairingCode = { code: string; expiresAt: string };
 
 const ITEMS_CACHE_KEY = "tcloud:web:items:v1";
 const TRASH_CACHE_KEY = "tcloud:web:trash:v1";
@@ -228,9 +231,51 @@ export function TCloudShell() {
   const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
   const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([]);
   const [storage, setStorage] = useState<StorageBreakdown | null>(null);
+  const [pairedDevices, setPairedDevices] = useState<PairedDevice[]>([]);
+  const [pairingCode, setPairingCode] = useState<PairingCode | null>(null);
+  const [pairingBusy, setPairingBusy] = useState(false);
   const [uploadParentId, setUploadParentId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const liveRevisionRef = useRef<string | null>(null);
+
+  const loadDevices = useCallback(async () => {
+    const response = await fetch("/api/core/devices", { cache: "no-store" });
+    if (response.ok) {
+      const data = await response.json() as unknown;
+      setPairedDevices(Array.isArray(data) ? data as PairedDevice[] : []);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const task = window.setTimeout(() => void loadDevices().catch(() => {}), 0);
+    return () => window.clearTimeout(task);
+  }, [settingsOpen, loadDevices]);
+
+  async function generatePairingCode() {
+    setPairingBusy(true);
+    setMutationMessage("");
+    try {
+      const response = await fetch("/api/core/devices/pairing", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ deviceName: "Novo dispositivo", platform: "mobile" }),
+      });
+      const data = await response.json() as PairingCode & MutationResponse;
+      if (!response.ok) throw new Error(data.message ?? "Não foi possível gerar o código.");
+      setPairingCode(data);
+    } catch (error) {
+      setMutationMessage(error instanceof Error ? error.message : "Falha no pareamento.");
+    } finally {
+      setPairingBusy(false);
+    }
+  }
+
+  async function revokePairedDevice(deviceId: string) {
+    if (!window.confirm("Remover o acesso deste dispositivo?")) return;
+    await mutationPost("/api/core/devices/revoke", { deviceId });
+    await loadDevices();
+  }
 
   useEffect(() => {
     const restore = window.setTimeout(() => {
@@ -1437,6 +1482,28 @@ async function createFolderIn(parentId: string) {
                 <span>Banco: {status.databaseConnected ? "conectado" : "offline"}</span>
                 <span>Cache local: {items.length} itens disponíveis</span>
                 <button type="button" onClick={() => void loadAll()}><RefreshCw size={15} />Verificar e atualizar</button>
+              </div>
+              <div className="web-settings-health web-pairing-card">
+                <strong><Smartphone size={17} /> Dispositivos conectados</strong>
+                <span>Gere um código temporário no Web e informe-o no celular ou desktop. O segredo mestre nunca sai do servidor.</span>
+                {pairingCode && (
+                  <div className="web-pairing-code">
+                    <b>{pairingCode.code}</b>
+                    <small>Expira às {new Date(pairingCode.expiresAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</small>
+                  </div>
+                )}
+                <button type="button" disabled={pairingBusy} onClick={() => void generatePairingCode()}>
+                  <ShieldCheck size={15} />{pairingBusy ? "Gerando…" : "Conectar novo dispositivo"}
+                </button>
+                <div className="web-device-list">
+                  {pairedDevices.map((device) => (
+                    <div key={device.id}>
+                      <span><b>{device.name}</b><small>{device.platform}{device.appVersion ? ` · ${device.appVersion}` : ""}</small></span>
+                      <button type="button" onClick={() => void revokePairedDevice(device.id)}>Remover</button>
+                    </div>
+                  ))}
+                  {pairedDevices.length === 0 && <small>Nenhum aparelho pareado ainda.</small>}
+                </div>
               </div>
             </section>
           </div>
