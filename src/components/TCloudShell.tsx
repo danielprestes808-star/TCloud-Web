@@ -36,6 +36,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
+import { QRCodeSVG } from "qrcode.react";
 import {
   useCallback,
   useEffect,
@@ -1486,8 +1487,17 @@ async function createFolderIn(parentId: string) {
                 <span>Gere um código temporário no Web e informe-o no celular ou desktop. O segredo mestre nunca sai do servidor.</span>
                 {pairingCode && (
                   <div className="web-pairing-code">
+                    <div className="web-pairing-qr" aria-label="QR Code para conectar o aplicativo">
+                      <QRCodeSVG
+                        value={`tcloud://pair?code=${encodeURIComponent(pairingCode.code)}`}
+                        size={184}
+                        level="M"
+                        marginSize={2}
+                      />
+                    </div>
+                    <small>Escaneie pelo TCloud Mobile</small>
                     <b>{pairingCode.code}</b>
-                    <small>Expira às {new Date(pairingCode.expiresAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</small>
+                    <small>Ou digite o código · expira às {new Date(pairingCode.expiresAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</small>
                   </div>
                 )}
                 <button type="button" disabled={pairingBusy} onClick={() => void generatePairingCode()}>

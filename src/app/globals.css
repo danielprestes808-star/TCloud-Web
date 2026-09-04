@@ -2580,6 +2580,63 @@ button[data-primary="true"] {
 }
 /* TCLOUD_SETTINGS_LAUNCHER_202_END */
 /* TCLOUD_WEB_LAYOUT_FINAL_20260904 */
+.tc-settings-backdrop {
+  align-items: center;
+  overflow: hidden;
+  padding: clamp(10px, 3vh, 28px);
+}
+
+.tc-settings-modal.web-settings-panel {
+  width: min(560px, 100%);
+  max-width: 100%;
+  max-height: min(880px, calc(100dvh - 20px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.tc-settings-modal-header {
+  position: sticky;
+  z-index: 3;
+  top: 0;
+  margin: -1px -1px 0;
+  padding: 16px;
+  background: color-mix(in srgb, var(--tc-surface) 94%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.web-pairing-qr {
+  display: grid;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 8px;
+  padding: 10px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.web-pairing-qr svg {
+  display: block;
+  width: min(184px, 58vw);
+  height: auto;
+}
+
+@media (max-height: 700px), (max-width: 680px) {
+  .tc-settings-backdrop {
+    align-items: stretch;
+    padding: 0;
+  }
+
+  .tc-settings-modal.web-settings-panel {
+    width: 100%;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+}
+
 .web-content h1,
 .web-content h2,
 .rc-page-title {
