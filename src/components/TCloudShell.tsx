@@ -378,12 +378,10 @@ export function TCloudShell() {
       }
     };
 
-    const timer = window.setInterval(refresh, document.visibilityState === "visible" ? 15000 : 30000);
     document.addEventListener("visibilitychange", refresh);
     window.addEventListener("online", refresh);
 
     return () => {
-      window.clearInterval(timer);
       document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("online", refresh);
     };
@@ -436,7 +434,7 @@ export function TCloudShell() {
 
     const timer = window.setInterval(
       () => void checkRevision(),
-      document.visibilityState === "visible" ? 1000 : 5000,
+      document.visibilityState === "visible" ? 5000 : 30000,
     );
 
     const visible = () => {

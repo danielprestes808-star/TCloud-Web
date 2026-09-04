@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "../styles/tcloud-design-system.css";
 import "./globals.css";
-import { TCloudLiveRefresh } from "@/components/TCloudLiveRefresh";
 import TCloudThemeBootstrap from "@/components/TCloudThemeBootstrap";
 import TCloudPwaBootstrap from "@/components/TCloudPwaBootstrap";
 
@@ -21,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body><TCloudThemeBootstrap /><TCloudPwaBootstrap />
-        <TCloudLiveRefresh />{children}</body>
+        {children}</body>
     </html>
   );
 }

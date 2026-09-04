@@ -2579,3 +2579,46 @@ button[data-primary="true"] {
   border-radius: 10px;
 }
 /* TCLOUD_SETTINGS_LAUNCHER_202_END */
+/* TCLOUD_WEB_LAYOUT_FINAL_20260904 */
+.web-content h1,
+.web-content h2,
+.rc-page-title {
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  font-weight: 700;
+}
+
+@media (min-width: 921px) {
+  :root { --tc-sidebar-width: 236px; }
+  .tcloud-web-app { grid-template-columns: 236px minmax(0, 1fr) !important; }
+  .web-sidebar.tcloud-web-sidebar-polished {
+    width: 236px !important;
+    min-width: 236px !important;
+    align-items: stretch !important;
+    gap: 4px;
+    padding: 14px 12px 12px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .tcloud-web-sidebar-polished .web-brand { justify-content: flex-start; }
+  .tcloud-web-sidebar-polished nav { align-items: stretch; gap: 3px; }
+  .tcloud-web-sidebar-polished .web-nav button,
+  .tcloud-web-sidebar-polished .web-settings-button {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    justify-content: flex-start !important;
+    gap: 12px;
+    padding: 0 12px !important;
+    white-space: nowrap;
+  }
+  .tcloud-web-sidebar-polished .web-nav button span,
+  .tcloud-web-sidebar-polished .web-settings-button span {
+    display: block !important;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+  }
+}
