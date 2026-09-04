@@ -1,0 +1,12 @@
+{
+  "name": "TCloud",
+  "short_name": "TCloud",
+  "description": "Seus arquivos, em todos os seus dispositivos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1115",
+  "theme_color": "#2f81f7",
+  "icons": [
+    { "src": "/icon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

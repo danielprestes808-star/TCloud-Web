@@ -181,6 +181,90 @@ button {
   width: 100%;
 }
 
+.web-settings-panel {
+  display: grid;
+  gap: 14px;
+  width: min(520px, calc(100vw - 28px));
+}
+
+.web-settings-health {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg);
+  background: var(--tc-surface-soft);
+}
+
+.web-settings-health > span {
+  color: var(--tc-text-secondary);
+  font-size: 13px;
+}
+
+.web-settings-health > button,
+.rc-warning > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: fit-content;
+  min-height: 36px;
+  margin-top: 6px;
+  padding: 0 13px;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-sm);
+  background: var(--tc-surface-raised);
+  cursor: pointer;
+}
+
+.web-insight-list {
+  display: grid;
+  gap: 8px;
+}
+
+.web-insight-list > article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-md);
+  background: var(--tc-surface-soft);
+}
+
+.web-insight-list strong,
+.web-insight-list span { display: block; }
+.web-insight-list span,
+.web-insight-list time { color: var(--tc-text-muted); font-size: 12px; }
+
+.web-storage-dashboard {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.web-storage-dashboard > article,
+.web-storage-dashboard > section {
+  padding: 16px;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg);
+  background: var(--tc-surface-soft);
+}
+
+.web-storage-dashboard > article span,
+.web-storage-dashboard > article strong { display: block; }
+.web-storage-dashboard > article span { color: var(--tc-text-muted); font-size: 12px; }
+.web-storage-dashboard > article strong { margin-top: 5px; font-size: 19px; }
+.web-storage-dashboard > section { grid-column: 1 / -1; }
+.web-storage-dashboard > section > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--tc-border); }
+
+@media (max-width: 680px) {
+  .web-storage-dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .web-insight-list > article { grid-template-columns: auto minmax(0, 1fr); }
+  .web-insight-list time { grid-column: 2; }
+}
+
 .web-workspace {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;

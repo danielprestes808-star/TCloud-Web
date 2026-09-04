@@ -2,8 +2,12 @@
 
 import {
   ArrowLeft,
+  Activity,
   ChevronRight,
+  Clock3,
   Cloud,
+  CloudDownload,
+  Copy,
   FileImage,
   FileText,
   Film,
@@ -12,9 +16,11 @@ import {
   Grid2X2,
   HardDrive,
   LayoutGrid,
+  ChartPie,
   List,
   LoaderCircle,
   MessageSquarePlus,
+  MessagesSquare,
   MoreHorizontal,
   MoveRight,
   Pencil,
@@ -23,6 +29,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  Star,
   Trash2,
   Upload,
   X,
@@ -37,6 +44,7 @@ import {
 } from "react";
 import { TCloudLoginScreen } from "./TCloudLoginScreen";
 import { TCloudForumManager } from "./TCloudForumManager";
+import TCloudThemeControl from "./TCloudThemeControl";
 
 type CoreStatus = {
   name?: string;
@@ -103,8 +111,28 @@ const navigation = [
   "Favoritos",
   "Disponível offline",
   "Lixeira",
+  "Atividade",
+  "Duplicados",
+  "Armazenamento",
   "Fóruns",
 ];
+
+type ActivityItem = { id: string; fileId?: string; action: string; detail?: string; createdAt: string };
+type DuplicateGroup = { signature: string; reclaimableBytes: number; files: TCloudItem[] };
+type StorageBreakdown = { totalBytes: number; imageBytes: number; videoBytes: number; audioBytes: number; documentBytes: number; otherBytes: number; largestFiles: TCloudItem[] };
+
+const ITEMS_CACHE_KEY = "tcloud:web:items:v1";
+const TRASH_CACHE_KEY = "tcloud:web:trash:v1";
+const FAVORITES_KEY = "tcloud:web:favorites:v1";
+
+function readCachedItems(key: string): TCloudItem[] {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(key) ?? "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 function formatBytes(value: number) {
   if (!Number.isFinite(value) || value <= 0) return "0 B";
@@ -195,9 +223,39 @@ export function TCloudShell() {
   const [menuItemId, setMenuItemId] = useState<string | null>(null);
   const [destinationDialog, setDestinationDialog] =
     useState<DestinationDialog | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
+  const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([]);
+  const [storage, setStorage] = useState<StorageBreakdown | null>(null);
   const [uploadParentId, setUploadParentId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const liveRevisionRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const restore = window.setTimeout(() => {
+      setItems(readCachedItems(ITEMS_CACHE_KEY));
+      setTrashItems(readCachedItems(TRASH_CACHE_KEY));
+      setFavoriteIds(
+        new Set(readCachedItems(FAVORITES_KEY).map((item) => item.id)),
+      );
+    }, 0);
+    return () => window.clearTimeout(restore);
+  }, []);
+
+  useEffect(() => {
+    const endpoint = activeNav === "Atividade" ? "activity" : activeNav === "Duplicados" ? "duplicates" : activeNav === "Armazenamento" ? "storage" : null;
+    if (!endpoint || !status.connected) return;
+    const controller = new AbortController();
+    void fetch(`/api/core/${endpoint}`, { cache: "no-store", signal: controller.signal })
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((data: unknown) => {
+        if (endpoint === "activity") setActivityItems(Array.isArray(data) ? data as ActivityItem[] : []);
+        if (endpoint === "duplicates") setDuplicateGroups(Array.isArray(data) ? data as DuplicateGroup[] : []);
+        if (endpoint === "storage") setStorage(data as StorageBreakdown);
+      }).catch(() => {});
+    return () => controller.abort();
+  }, [activeNav, status.connected]);
 
   const loadAll = useCallback(async () => {
     const [
@@ -206,21 +264,23 @@ export function TCloudShell() {
       indexResult,
       filesResult,
       trashResult,
+      favoritesResult,
     ] = await Promise.allSettled([
       fetch("/api/core/status", { cache: "no-store" }),
       fetch("/api/core/auth/status", { cache: "no-store" }),
       fetch("/api/core/index/status", { cache: "no-store" }),
       fetch("/api/core/files", { cache: "no-store" }),
       fetch("/api/core/trash", { cache: "no-store" }),
+      fetch("/api/core/favorites", { cache: "no-store" }),
     ]);
 
-    if (statusResult.status === "fulfilled") {
+    if (statusResult.status === "fulfilled" && statusResult.value.ok) {
       setStatus(await statusResult.value.json());
     } else {
       setStatus({ connected: false });
     }
 
-    if (authResult.status === "fulfilled") {
+    if (authResult.status === "fulfilled" && authResult.value.ok) {
       setAuth(await authResult.value.json());
     } else {
       setAuth({
@@ -229,23 +289,29 @@ export function TCloudShell() {
       });
     }
 
-    if (indexResult.status === "fulfilled") {
+    if (indexResult.status === "fulfilled" && indexResult.value.ok) {
       setIndexStatus(await indexResult.value.json());
     }
 
-    if (filesResult.status === "fulfilled") {
+    if (filesResult.status === "fulfilled" && filesResult.value.ok) {
       const data = await filesResult.value.json();
       const nextItems = Array.isArray(data) ? data : [];
       setItems(nextItems);
-    } else {
-      setItems([]);
+      window.localStorage.setItem(ITEMS_CACHE_KEY, JSON.stringify(nextItems));
     }
 
-    if (trashResult.status === "fulfilled") {
+    if (trashResult.status === "fulfilled" && trashResult.value.ok) {
       const data = await trashResult.value.json();
-      setTrashItems(Array.isArray(data) ? data : []);
-    } else {
-      setTrashItems([]);
+      const nextTrash = Array.isArray(data) ? data : [];
+      setTrashItems(nextTrash);
+      window.localStorage.setItem(TRASH_CACHE_KEY, JSON.stringify(nextTrash));
+    }
+
+    if (favoritesResult.status === "fulfilled" && favoritesResult.value.ok) {
+      const data = await favoritesResult.value.json();
+      const favorites = Array.isArray(data) ? data as TCloudItem[] : [];
+      setFavoriteIds(new Set(favorites.map((item) => item.id)));
+      window.localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
     }
 
     setLoading(false);
@@ -454,6 +520,9 @@ export function TCloudShell() {
 
     let next = source.filter((item) => {
       if (activeNav === "Lixeira") return true;
+      if (activeNav === "Recentes") return item.kind !== "folder";
+      if (activeNav === "Favoritos") return favoriteIds.has(item.id);
+      if (activeNav === "Disponível offline") return item.syncState === "device";
       if (activeNav !== "Arquivos") return false;
 
       if (currentFolderId) {
@@ -470,8 +539,39 @@ export function TCloudShell() {
       );
     }
 
+    if (activeNav === "Recentes") {
+      next = [...next].sort(
+        (left, right) =>
+          Date.parse(right.modifiedAt) - Date.parse(left.modifiedAt),
+      ).slice(0, 100);
+    }
+
     return next;
-  }, [activeNav, currentFolderId, items, query, trashItems]);
+  }, [activeNav, currentFolderId, favoriteIds, items, query, trashItems]);
+
+  function toggleFavorite(item: TCloudItem) {
+    const favorite = !favoriteIds.has(item.id);
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      if (next.has(item.id)) next.delete(item.id);
+      else next.add(item.id);
+      const favoriteItems = items.filter((candidate) => next.has(candidate.id));
+      window.localStorage.setItem(FAVORITES_KEY, JSON.stringify(favoriteItems));
+      return next;
+    });
+    setMenuItemId(null);
+    if (status.connected) {
+      void fetch("/api/core/favorites", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fileId: item.id, favorite }),
+      }).then((response) => {
+        if (!response.ok) throw new Error("Falha ao sincronizar favorito.");
+      }).catch(() => {
+        setMutationMessage("O favorito foi salvo neste navegador e será sincronizado quando o Core estiver disponível.");
+      });
+    }
+  }
 
   async function runMutation(
     busyText: string,
@@ -734,7 +834,7 @@ async function createFolderIn(parentId: string) {
     );
   }
 
-  if (!status.connected) {
+  if (!status.connected && items.length === 0) {
     return (
       <main className="rc-fullscreen-state">
         <Cloud size={38} />
@@ -750,7 +850,7 @@ async function createFolderIn(parentId: string) {
     );
   }
 
-  if (!auth.authorized) {
+  if (status.connected && !auth.authorized) {
     return <TCloudLoginScreen />;
   }
 
@@ -811,8 +911,22 @@ async function createFolderIn(parentId: string) {
             >
               {label === "Arquivos" ? (
                 <Folder size={17} />
+              ) : label === "Recentes" ? (
+                <Clock3 size={17} />
+              ) : label === "Favoritos" ? (
+                <Star size={17} />
+              ) : label === "Disponível offline" ? (
+                <CloudDownload size={17} />
               ) : label === "Lixeira" ? (
                 <Trash2 size={17} />
+              ) : label === "Atividade" ? (
+                <Activity size={17} />
+              ) : label === "Duplicados" ? (
+                <Copy size={17} />
+              ) : label === "Armazenamento" ? (
+                <ChartPie size={17} />
+              ) : label === "Fóruns" ? (
+                <MessagesSquare size={17} />
               ) : (
                 <FileText size={17} />
               )}
@@ -842,7 +956,7 @@ async function createFolderIn(parentId: string) {
           </small>
         </div>
 
-        <button className="web-settings-button" type="button">
+        <button className="web-settings-button" onClick={() => setSettingsOpen(true)} type="button">
           <Settings size={17} />
           <span>Configurações</span>
         </button>
@@ -978,7 +1092,11 @@ async function createFolderIn(parentId: string) {
                     : "Pastas e fóruns sincronizados pelo Core."
                   : activeNav === "Lixeira"
                     ? "Arquivos removidos podem ser restaurados."
-                    : "Esta área será conectada ao índice central nas próximas fases."}
+                    : activeNav === "Recentes"
+                      ? "Os arquivos modificados mais recentemente em todos os locais."
+                      : activeNav === "Favoritos"
+                        ? "Seus arquivos marcados para acesso rápido neste navegador."
+                        : "Arquivos mantidos neste dispositivo e disponíveis sem rede."}
               </p>
             </div>
 
@@ -999,20 +1117,38 @@ async function createFolderIn(parentId: string) {
             </div>
           )}
 
+          {!status.connected && items.length > 0 && (
+            <div className="rc-warning">
+              <CloudDownload size={18} />
+              <div>
+                <strong>Modo offline</strong>
+                <span>Mostrando o catálogo salvo. As alterações voltam quando o Core reconectar.</span>
+              </div>
+              <button type="button" onClick={() => void loadAll()}><RefreshCw size={15} />Tentar novamente</button>
+            </div>
+          )}
+
           {(indexMessage || mutationMessage) && (
             <div className="rc-index-message">
               {mutationMessage || indexMessage}
             </div>
           )}
 
-          {activeNav !== "Arquivos" && activeNav !== "Lixeira" ? (
-            <div className="web-empty">
-              <Cloud size={34} />
-              <strong>{activeNav}</strong>
-              <span>
-                A estrutura visual está pronta; os dados desta área entram
-                nas próximas fases do Core.
-              </span>
+          {activeNav === "Atividade" ? (
+            <div className="web-insight-list">
+              {activityItems.length === 0 ? <div className="web-empty"><Activity size={34} /><strong>Nenhuma atividade registrada.</strong></div> : activityItems.map((entry) => <article key={entry.id}><Activity size={18} /><div><strong>{entry.action.replaceAll(".", " ")}</strong><span>{entry.detail ?? "Operação sincronizada"}</span></div><time>{new Date(entry.createdAt).toLocaleString("pt-BR")}</time></article>)}
+            </div>
+          ) : activeNav === "Duplicados" ? (
+            <div className="web-insight-list">
+              {duplicateGroups.length === 0 ? <div className="web-empty"><Copy size={34} /><strong>Nenhuma cópia provável encontrada.</strong></div> : duplicateGroups.map((group) => <article key={group.signature}><Copy size={18} /><div><strong>{group.files[0]?.name ?? "Arquivos duplicados"}</strong><span>{group.files.length} cópias · {formatBytes(group.reclaimableBytes)} recuperáveis</span></div></article>)}
+            </div>
+          ) : activeNav === "Armazenamento" ? (
+            <div className="web-storage-dashboard">
+              <article><span>Total</span><strong>{formatBytes(storage?.totalBytes ?? 0)}</strong></article>
+              <article><span>Imagens</span><strong>{formatBytes(storage?.imageBytes ?? 0)}</strong></article>
+              <article><span>Vídeos</span><strong>{formatBytes(storage?.videoBytes ?? 0)}</strong></article>
+              <article><span>Documentos</span><strong>{formatBytes(storage?.documentBytes ?? 0)}</strong></article>
+              <section><h2>Maiores arquivos</h2>{(storage?.largestFiles ?? []).slice(0, 12).map((file) => <div key={file.id}><strong>{file.name}</strong><span>{formatBytes(file.size)}</span></div>)}</section>
             </div>
           ) : visibleItems.length === 0 ? (
             <div className="web-empty">
@@ -1097,6 +1233,10 @@ async function createFolderIn(parentId: string) {
                                 </button>
                               ) : (
                                 <>
+                                  <button onClick={() => toggleFavorite(item)} type="button">
+                                    <Star size={15} fill={favoriteIds.has(item.id) ? "currentColor" : "none"} />
+                                    {favoriteIds.has(item.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                                  </button>
                                   <button
                                     onClick={() =>
                                       void renameItem(item)
@@ -1212,6 +1352,10 @@ async function createFolderIn(parentId: string) {
                                 </button>
                               ) : (
                                 <>
+                                  <button onClick={() => toggleFavorite(item)} type="button">
+                                    <Star size={15} fill={favoriteIds.has(item.id) ? "currentColor" : "none"} />
+                                    {favoriteIds.has(item.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                                  </button>
                                   <button
                                     onClick={() =>
                                       void renameItem(item)
@@ -1277,6 +1421,26 @@ async function createFolderIn(parentId: string) {
             {indexStatus.lastStatus ?? "ainda não executado"}
           </span>
         </footer>
+
+        {settingsOpen && (
+          <div className="tc-settings-backdrop" role="presentation" onMouseDown={() => setSettingsOpen(false)}>
+            <section className="tc-settings-modal web-settings-panel" role="dialog" aria-modal="true" aria-label="Configurações do TCloud" onMouseDown={(event) => event.stopPropagation()}>
+              <header className="tc-settings-modal-header">
+                <div><h2>Configurações</h2><p>TCloud Web e Core</p></div>
+                <button className="tc-settings-close" type="button" aria-label="Fechar" onClick={() => setSettingsOpen(false)}><X size={18} /></button>
+              </header>
+              <TCloudThemeControl />
+              <div className="web-settings-health">
+                <strong>Estado do ecossistema</strong>
+                <span>Core: {status.connected ? "conectado" : "offline"}</span>
+                <span>Telegram: {status.telegramConnected ? "conectado" : "offline"}</span>
+                <span>Banco: {status.databaseConnected ? "conectado" : "offline"}</span>
+                <span>Cache local: {items.length} itens disponíveis</span>
+                <button type="button" onClick={() => void loadAll()}><RefreshCw size={15} />Verificar e atualizar</button>
+              </div>
+            </section>
+          </div>
+        )}
 
         {destinationDialog && (
           <div className="web-mutation-overlay">
