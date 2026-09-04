@@ -93,6 +93,7 @@ type TCloudItem = {
   syncState: string;
   modifiedAt: string;
   source: string;
+  sourceIds?: string[];
 };
 
 type MutationResponse = {
@@ -180,6 +181,23 @@ function syncLabel(state: string) {
   if (state === "syncing") return "Sincronizando";
   if (state === "trash") return "Na Lixeira";
   return "Somente online";
+}
+
+function folderDisplayName(value: string) {
+  let normalized = value
+    .replace(/[\u00a0\u2007\u202f\u3000]/g, " ")
+    .replace(/[\u200b-\u200d\u2060\ufeff]/g, "")
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+  while (/\s*\([1-9]\d*\)$/.test(normalized)) {
+    normalized = normalized.replace(/\s*\([1-9]\d*\)$/, "").trim();
+  }
+  return normalized;
+}
+
+function folderGroupKey(item: TCloudItem) {
+  return folderDisplayName(item.name).toLocaleLowerCase("pt-BR") || item.id;
 }
 
 async function mutationPost(
@@ -516,20 +534,46 @@ export function TCloudShell() {
     }
   }
 
-  const folderMap = useMemo(
-    () =>
-      new Map(
-        items
-          .filter((item) => item.kind === "folder")
-          .map((item) => [item.id, item]),
-      ),
-    [items],
-  );
+  const { folders, folderMap, physicalToLogicalFolder } = useMemo(() => {
+    const groups = new Map<string, TCloudItem[]>();
+    for (const folder of items.filter((item) => item.kind === "folder")) {
+      const key = folderGroupKey(folder);
+      groups.set(key, [...(groups.get(key) ?? []), folder]);
+    }
 
-  const folders = useMemo(
-    () => items.filter((item) => item.kind === "folder"),
-    [items],
-  );
+    const physicalToLogical = new Map<string, string>();
+    const logicalFolders = [...groups.values()].map((sources) => {
+      sources.sort((left, right) => left.id.localeCompare(right.id));
+      const exact = sources.find(
+        (source) => folderDisplayName(source.name) === source.name.trim(),
+      );
+      const representative = exact ?? sources[0];
+      const sourceIds = sources.map((source) => source.id);
+      for (const source of sources) {
+        physicalToLogical.set(source.id, representative.id);
+      }
+      return {
+        ...representative,
+        name: folderDisplayName(representative.name),
+        parentId:
+          sources.find((source) => source.parentId)?.parentId ?? null,
+        sourceIds,
+      };
+    });
+
+    for (const folder of logicalFolders) {
+      if (folder.parentId) {
+        folder.parentId =
+          physicalToLogical.get(folder.parentId) ?? folder.parentId;
+      }
+    }
+
+    return {
+      folders: logicalFolders,
+      folderMap: new Map(logicalFolders.map((folder) => [folder.id, folder])),
+      physicalToLogicalFolder: physicalToLogical,
+    };
+  }, [items]);
 
   const forumRoots = useMemo(
     () =>
@@ -559,8 +603,14 @@ export function TCloudShell() {
   }
 
   const visibleItems = useMemo(() => {
-    const source =
-      activeNav === "Lixeira" ? trashItems : items;
+    const source = activeNav === "Lixeira"
+      ? trashItems
+      : [...items.filter((item) => item.kind !== "folder"), ...folders];
+    const currentSourceIds = new Set(
+      currentFolderId
+        ? folderMap.get(currentFolderId)?.sourceIds ?? [currentFolderId]
+        : [],
+    );
 
     let next = source.filter((item) => {
       if (activeNav === "Lixeira") return true;
@@ -570,7 +620,14 @@ export function TCloudShell() {
       if (activeNav !== "Arquivos") return false;
 
       if (currentFolderId) {
-        return item.parentId === currentFolderId;
+        if (!item.parentId) return false;
+        if (item.kind === "folder") {
+          return (
+            (physicalToLogicalFolder.get(item.parentId) ?? item.parentId) ===
+            currentFolderId
+          );
+        }
+        return currentSourceIds.has(item.parentId);
       }
 
       return !item.parentId;
@@ -591,7 +648,17 @@ export function TCloudShell() {
     }
 
     return next;
-  }, [activeNav, currentFolderId, favoriteIds, items, query, trashItems]);
+  }, [
+    activeNav,
+    currentFolderId,
+    favoriteIds,
+    folderMap,
+    folders,
+    items,
+    physicalToLogicalFolder,
+    query,
+    trashItems,
+  ]);
 
   function toggleFavorite(item: TCloudItem) {
     const favorite = !favoriteIds.has(item.id);
@@ -1321,6 +1388,9 @@ async function createFolderIn(parentId: string) {
                       <strong title={item.name}>{item.name}</strong>
                       <span>
                         {folder ? "Pasta" : formatBytes(item.size)}
+                        {folder && (item.sourceIds?.length ?? 0) > 1
+                          ? ` unificada (${item.sourceIds?.length} origens)`
+                          : ""}
                         {" · "}
                         {item.modifiedAt}
                       </span>
