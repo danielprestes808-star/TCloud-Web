@@ -114,6 +114,7 @@ const navigation = [
   "Recentes",
   "Favoritos",
   "Disponível offline",
+  "Dispositivos",
   "Lixeira",
   "Atividade",
   "Duplicados",
@@ -639,6 +640,13 @@ export function TCloudShell() {
     setCurrentFolderId(null);
   }
 
+  function openDeviceRoot(kind: "computer" | "phone") {
+    const aliases = kind === "computer" ? ["meu computador"] : ["meu telefone", "galeria"];
+    const root = folders.find((folder) => !folder.parentId && aliases.includes(folder.name.trim().toLocaleLowerCase("pt-BR")));
+    setActiveNav("Arquivos");
+    setCurrentFolderId(root?.id ?? null);
+  }
+
   const visibleItems = useMemo(() => {
     const source = activeNav === "Lixeira"
       ? trashItems
@@ -1071,6 +1079,8 @@ async function createFolderIn(parentId: string) {
                 <Star size={17} />
               ) : label === "Disponível offline" ? (
                 <CloudDownload size={17} />
+              ) : label === "Dispositivos" ? (
+                <Smartphone size={17} />
               ) : label === "Lixeira" ? (
                 <Trash2 size={17} />
               ) : label === "Atividade" ? (
@@ -1310,7 +1320,21 @@ async function createFolderIn(parentId: string) {
             </div>
           )}
 
-          {activeNav === "Atividade" ? (
+          {activeNav === "Dispositivos" ? (
+            <div className="web-device-grid">
+              <button type="button" onClick={() => openDeviceRoot("computer")}>
+                <span className="web-device-illustration"><HardDrive size={32} /></span>
+                <span><b>Meu computador</b><small>Documentos, Área de Trabalho, Imagens e outras pastas do PC</small></span>
+                <ChevronRight size={20} />
+              </button>
+              <button type="button" onClick={() => openDeviceRoot("phone")}>
+                <span className="web-device-illustration is-phone"><Smartphone size={32} /></span>
+                <span><b>Meu telefone</b><small>Galeria, câmera, vídeos e pastas sincronizadas do Android</small></span>
+                <ChevronRight size={20} />
+              </button>
+              {pairedDevices.map((device) => <article key={device.id}><Smartphone size={18}/><span><b>{device.name}</b><small>{device.platform} · {device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleString("pt-BR") : "Conectado"}</small></span></article>)}
+            </div>
+          ) : activeNav === "Atividade" ? (
             <div className="web-insight-list">
               {activityItems.length === 0 ? <div className="web-empty"><Activity size={34} /><strong>Nenhuma atividade registrada.</strong></div> : activityItems.map((entry) => <article key={entry.id}><Activity size={18} /><div><strong>{entry.action.replaceAll(".", " ")}</strong><span>{entry.detail ?? "Operação sincronizada"}</span></div><time>{new Date(entry.createdAt).toLocaleString("pt-BR")}</time></article>)}
             </div>
