@@ -1236,6 +1236,26 @@ async function createFolderIn(parentId: string) {
         </div>
 
         <div className="web-content">
+          {activeNav === "Arquivos" && !currentFolder && (
+            <section className="web-workspace-hero">
+              <div className="web-workspace-hero-copy">
+                <span className="web-eyebrow">SEU ESPAÇO NA NUVEM</span>
+                <h1>Bom te ver por aqui.</h1>
+                <p>Acesse, organize e continue trabalhando de qualquer dispositivo.</p>
+                <div className="web-workspace-hero-actions">
+                  <button className="is-primary" onClick={requestUpload} type="button"><Upload size={17} /> Enviar arquivos</button>
+                  <button onClick={requestNewFolder} type="button"><FolderPlus size={17} /> Nova pasta</button>
+                </div>
+              </div>
+              <div className="web-workspace-summary">
+                <div><strong>{visibleItems.length}</strong><span>itens disponíveis</span></div>
+                <div><strong>{status.devicesCount ?? 0}</strong><span>dispositivos</span></div>
+                <div className={status.connected ? "is-online" : "is-offline"}>
+                  <Cloud size={19} /><span>{status.connected ? "Tudo sincronizado" : "Trabalhando offline"}</span>
+                </div>
+              </div>
+            </section>
+          )}
           <div className="web-content-heading">
             <div>
               <h1>{currentFolder?.name ?? activeNav}</h1>
