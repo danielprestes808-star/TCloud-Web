@@ -275,6 +275,103 @@ button {
   .web-insight-list time { grid-column: 2; }
 }
 
+/* TCLOUD WORKSPACE UI 1.0 — shared with the desktop composition. */
+.tcloud-web-app {
+  height: 100dvh;
+  overflow: hidden;
+  font-family: Inter, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+}
+.web-workspace {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.web-sidebar { scrollbar-gutter: stable; }
+.web-topbar {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(280px, 620px) auto;
+  gap: 16px;
+  border-bottom: 1px solid var(--tc-border);
+  backdrop-filter: none;
+}
+.web-breadcrumb { min-width: 0; }
+.web-search:focus-within {
+  border-color: color-mix(in srgb, var(--tc-primary) 62%, var(--tc-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tc-primary) 14%, transparent);
+}
+.web-content {
+  min-height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+.web-file-card { transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease; }
+.web-file-card:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(0,0,0,.1); }
+.web-file-list {
+  overflow: hidden;
+  border: 1px solid var(--tc-border);
+  border-radius: 14px;
+  background: var(--tc-surface);
+}
+.web-file-list-head { position: sticky; top: 0; z-index: 2; background: var(--tc-surface-2); }
+.web-file-row { min-height: 50px; }
+.web-empty {
+  width: min(460px, calc(100% - 24px));
+  min-height: 220px;
+  margin: 34px auto;
+  padding: 28px;
+  border: 1px dashed var(--tc-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--tc-surface) 78%, transparent);
+}
+.web-statusbar { min-height: 36px; padding-inline: 20px; border-top: 1px solid var(--tc-border); }
+.tc-settings-modal.web-settings-panel { padding: 0; }
+.web-settings-health { margin-inline: 16px; }
+.web-settings-health:last-child { margin-bottom: 16px; }
+
+@media (max-width: 920px) {
+  .tcloud-web-app { grid-template-columns: 76px minmax(0, 1fr); }
+  .web-sidebar { width: 76px; }
+  .web-brand > div:last-child,
+  .web-nav button span,
+  .web-settings-button span,
+  .web-storage { display: none; }
+  .web-topbar { grid-template-columns: minmax(0, 1fr) auto; }
+  .web-search { grid-column: 1 / -1; grid-row: 2; width: 100%; }
+}
+
+@media (max-width: 680px) {
+  .tcloud-web-app { display: block; height: 100dvh; }
+  .web-sidebar {
+    position: fixed;
+    z-index: 80;
+    inset: auto 0 0;
+    display: block;
+    width: 100%;
+    height: 70px;
+    padding: 6px 8px max(6px, env(safe-area-inset-bottom));
+    border: 1px solid var(--tc-border);
+    border-width: 1px 0 0;
+  }
+  .web-brand, .web-sidebar-spacer, .web-storage, .web-settings-button { display: none; }
+  .web-nav { display: grid; grid-template-columns: repeat(5, 1fr); height: 100%; padding: 0; }
+  .web-nav button { justify-content: center; min-width: 0; padding: 0; }
+  .web-nav button:nth-child(n+6) { display: none; }
+  .web-workspace { height: calc(100dvh - 70px); }
+  .web-topbar { padding: 10px 12px; gap: 8px; }
+  .rc-status-pills { display: none; }
+  .web-content { padding: 16px 12px 22px; }
+  .web-file-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .web-file-meta { padding-inline: 11px; }
+  .web-statusbar { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tcloud-web-app * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
 .web-workspace {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
