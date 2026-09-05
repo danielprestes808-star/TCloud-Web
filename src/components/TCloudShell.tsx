@@ -665,11 +665,18 @@ export function TCloudShell() {
       if (activeNav !== "Arquivos") return false;
 
       if (!currentFolderId && activeDevice) {
-        if (item.kind !== "folder" || item.parentId) return false;
-        const name = item.name.trim().toLocaleLowerCase("pt-BR");
-        return activeDevice === "computer"
-          ? name.startsWith("meu computador")
-          : name.startsWith("meu telefone") || name.startsWith("galeria");
+        if (item.kind !== "folder") return false;
+        const belongsToDevice = (folder: TCloudItem) => {
+          const name = folder.name.trim().toLocaleLowerCase("pt-BR");
+          return activeDevice === "computer"
+            ? name.startsWith("meu computador")
+            : name.startsWith("meu telefone") || name.startsWith("galeria");
+        };
+        const roots = folders.filter((folder) => !folder.parentId && belongsToDevice(folder));
+        const rootIds = new Set(roots.flatMap((folder) => folder.sourceIds ?? [folder.id]));
+        const children = folders.filter((folder) => folder.parentId && rootIds.has(folder.parentId));
+        // Device cards behave as Explorer roots: show their folders immediately.
+        return children.length > 0 ? children.some((folder) => folder.id === item.id) : roots.some((folder) => folder.id === item.id);
       }
 
       if (currentFolderId) {
