@@ -253,6 +253,7 @@ export function TCloudShell() {
   const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([]);
   const [storage, setStorage] = useState<StorageBreakdown | null>(null);
   const [pairedDevices, setPairedDevices] = useState<PairedDevice[]>([]);
+  const [activeDevice, setActiveDevice] = useState<"computer" | "phone" | null>(null);
   const [pairingCode, setPairingCode] = useState<PairingCode | null>(null);
   const [pairingBusy, setPairingBusy] = useState(false);
   const [previewItem, setPreviewItem] = useState<TCloudItem | null>(null);
@@ -641,10 +642,9 @@ export function TCloudShell() {
   }
 
   function openDeviceRoot(kind: "computer" | "phone") {
-    const aliases = kind === "computer" ? ["meu computador"] : ["meu telefone", "galeria"];
-    const root = folders.find((folder) => !folder.parentId && aliases.includes(folder.name.trim().toLocaleLowerCase("pt-BR")));
     setActiveNav("Arquivos");
-    setCurrentFolderId(root?.id ?? null);
+    setCurrentFolderId(null);
+    setActiveDevice(kind);
   }
 
   const visibleItems = useMemo(() => {
@@ -663,6 +663,14 @@ export function TCloudShell() {
       if (activeNav === "Favoritos") return favoriteIds.has(item.id);
       if (activeNav === "Disponível offline") return item.syncState === "device";
       if (activeNav !== "Arquivos") return false;
+
+      if (!currentFolderId && activeDevice) {
+        if (item.kind !== "folder" || item.parentId) return false;
+        const name = item.name.trim().toLocaleLowerCase("pt-BR");
+        return activeDevice === "computer"
+          ? name.startsWith("meu computador")
+          : name.startsWith("meu telefone") || name.startsWith("galeria");
+      }
 
       if (currentFolderId) {
         if (!item.parentId) return false;
@@ -695,6 +703,7 @@ export function TCloudShell() {
     return next;
   }, [
     activeNav,
+    activeDevice,
     currentFolderId,
     favoriteIds,
     folderMap,
@@ -1066,6 +1075,7 @@ async function createFolderIn(parentId: string) {
                 }
 
                 setActiveNav(label);
+                setActiveDevice(null);
                 setCurrentFolderId(null);
                 setMenuItemId(null);
               }}
@@ -1268,7 +1278,7 @@ async function createFolderIn(parentId: string) {
           )}
           <div className="web-content-heading">
             <div>
-              <h1>{currentFolder?.name ?? activeNav}</h1>
+              <h1>{currentFolder?.name ?? (activeDevice === "computer" ? "Meu computador" : activeDevice === "phone" ? "Meu telefone" : activeNav)}</h1>
               <p>
                 {activeNav === "Arquivos"
                   ? currentFolder
@@ -1636,12 +1646,12 @@ async function createFolderIn(parentId: string) {
           <div className="tc-settings-backdrop" role="presentation" onMouseDown={() => setSettingsOpen(false)}>
             <section className="tc-settings-modal web-settings-panel" role="dialog" aria-modal="true" aria-label="Configurações do TCloud" onMouseDown={(event) => event.stopPropagation()}>
               <header className="tc-settings-modal-header">
-                <div><h2>Configurações</h2><p>TCloud Web e Core</p></div>
+                <div><h2>Preferências</h2><p>Conta, dispositivos e aparência</p></div>
                 <button className="tc-settings-close" type="button" aria-label="Fechar" onClick={() => setSettingsOpen(false)}><X size={18} /></button>
               </header>
               <TCloudThemeControl />
               <div className="web-settings-health">
-                <strong>Estado do ecossistema</strong>
+                <strong>Status avançado</strong>
                 <span>Core: {status.connected ? "conectado" : "offline"}</span>
                 <span>Telegram: {status.telegramConnected ? "conectado" : "offline"}</span>
                 <span>Banco: {status.databaseConnected ? "conectado" : "offline"}</span>
@@ -1649,7 +1659,7 @@ async function createFolderIn(parentId: string) {
                 <button type="button" onClick={() => void loadAll()}><RefreshCw size={15} />Verificar e atualizar</button>
               </div>
               <div className="web-settings-health web-pairing-card">
-                <strong><Smartphone size={17} /> Dispositivos conectados</strong>
+                <strong><Smartphone size={17} /> Conta e dispositivos</strong>
                 <span>Gere um código temporário no Web e informe-o no celular ou desktop. O segredo mestre nunca sai do servidor.</span>
                 {pairingCode && (
                   <div className="web-pairing-code">
