@@ -24,6 +24,7 @@ import {
   MoreHorizontal,
   MoveRight,
   Pencil,
+  Plus,
   RefreshCw,
   RotateCcw,
   Search,
@@ -1039,7 +1040,13 @@ async function createFolderIn(parentId: string) {
           </div>
         </div>
 
+        <button className="web-primary-create" onClick={requestNewFolder} type="button">
+          <span className="web-primary-create-icon"><Plus size={20} /></span>
+          <span>Nova pasta</span>
+        </button>
+
         <nav className="web-nav" aria-label="Navegação principal">
+          <span className="web-nav-heading">Navegação</span>
           {navigation.map((label) => (
             <button
               className={activeNav === label ? "is-active" : ""}
