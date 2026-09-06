@@ -121,7 +121,7 @@ export function TelegramConnectCard() {
         deviceName: navigator.platform
           ? `Navegador em ${navigator.platform}`
           : "Navegador Web",
-        appVersion: "0.3.8",
+        appVersion: "0.3.9",
       }),
     });
     const result = (await response.json()) as AuthStatus;

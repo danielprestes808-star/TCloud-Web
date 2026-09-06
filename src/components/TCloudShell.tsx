@@ -1085,7 +1085,7 @@ async function createFolderIn(parentId: string) {
       <aside className="web-sidebar tcloud-web-sidebar-polished">
         <div className="web-brand">
           <div className="web-brand-mark">
-            <Cloud size={19} strokeWidth={2.2} />
+            <Image src="/tcloud-logo.svg" width={28} height={28} alt="" priority />
           </div>
           <div>
             <strong>TCloud</strong>

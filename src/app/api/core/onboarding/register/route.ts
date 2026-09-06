@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const body = {
       deviceName: String(supplied.deviceName || "Navegador Web"),
       platform: "web",
-      appVersion: String(supplied.appVersion || "0.3.8"),
+      appVersion: String(supplied.appVersion || "0.3.9"),
     };
     const response = await corePublicFetch("/api/v1/onboarding/register", {
       method: "POST",
