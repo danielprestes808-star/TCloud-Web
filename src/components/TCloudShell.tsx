@@ -258,6 +258,11 @@ export function TCloudShell() {
   const [pairingBusy, setPairingBusy] = useState(false);
   const [previewItem, setPreviewItem] = useState<TCloudItem | null>(null);
   const [mediaRetry, setMediaRetry] = useState(0);
+  const [density, setDensity] = useState<"comfortable" | "compact">(() =>
+    typeof window !== "undefined" && window.localStorage.getItem("tcloud:web:density") === "compact"
+      ? "compact"
+      : "comfortable",
+  );
   const [mediaError, setMediaError] = useState(false);
   const [failedThumbnails, setFailedThumbnails] = useState<Set<string>>(new Set());
   const [uploadParentId, setUploadParentId] = useState<string | null>(null);
@@ -273,6 +278,11 @@ export function TCloudShell() {
     setMediaRetry(0);
     setPreviewItem(item);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.density = density;
+    window.localStorage.setItem("tcloud:web:density", density);
+  }, [density]);
 
   useEffect(() => {
     if (!previewItem) return;
@@ -721,6 +731,25 @@ export function TCloudShell() {
     trashItems,
   ]);
 
+  const recentMedia = useMemo(
+    () => visibleItems.filter((item) => item.kind === "image" || item.kind === "video").slice(0, 12),
+    [visibleItems],
+  );
+  const [recentCarouselIndex, setRecentCarouselIndex] = useState(0);
+  const [recentCarouselPaused, setRecentCarouselPaused] = useState(false);
+
+  useEffect(() => {
+    if (activeNav !== "Recentes" || recentMedia.length < 2 || recentCarouselPaused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => {
+      setRecentCarouselIndex((current) => (current + 1) % recentMedia.length);
+    }, 4500);
+    return () => window.clearInterval(timer);
+  }, [activeNav, recentCarouselPaused, recentMedia.length]);
+
+  const activeRecentIndex = recentMedia.length > 0
+    ? recentCarouselIndex % recentMedia.length
+    : 0;
+
   function toggleFavorite(item: TCloudItem) {
     const favorite = !favoriteIds.has(item.id);
     setFavoriteIds((current) => {
@@ -1137,7 +1166,7 @@ async function createFolderIn(parentId: string) {
           </small>
         </div>
 
-        <button className="web-settings-button" onClick={() => setSettingsOpen(true)} type="button">
+        <button className={`web-settings-button ${activeNav === "Configurações" ? "is-active" : ""}`} onClick={() => { setActiveNav("Configurações"); setSettingsOpen(true); setCurrentFolderId(null); setActiveDevice(null); }} type="button">
           <Settings size={17} />
           <span>Configurações</span>
         </button>
@@ -1335,6 +1364,30 @@ async function createFolderIn(parentId: string) {
             <div className="rc-index-message">
               {mutationMessage || indexMessage}
             </div>
+          )}
+
+          {activeNav === "Recentes" && recentMedia.length > 0 && (
+            <section className="web-recent-carousel" aria-label="Destaques recentes" onMouseEnter={() => setRecentCarouselPaused(true)} onMouseLeave={() => setRecentCarouselPaused(false)} onFocus={() => setRecentCarouselPaused(true)} onBlur={() => setRecentCarouselPaused(false)}>
+              <button
+                type="button"
+                className="web-recent-carousel-stage"
+                onClick={() => openItem(recentMedia[activeRecentIndex])}
+              >
+                {recentMedia.map((item, index) => (
+                  <span className={index === activeRecentIndex ? "is-active" : ""} key={item.id}>
+                    {item.kind === "image" ? (
+                      <Image unoptimized fill sizes="(max-width: 700px) 100vw, 70vw" src={`/api/core/media/${encodeURIComponent(item.id)}`} alt="" />
+                    ) : (
+                      <video muted playsInline preload="metadata" src={`/api/core/media/${encodeURIComponent(item.id)}`} />
+                    )}
+                    <span className="web-recent-carousel-caption"><b>{item.name}</b><small>{new Date(item.modifiedAt).toLocaleString("pt-BR")}</small></span>
+                  </span>
+                ))}
+              </button>
+              <div className="web-recent-carousel-dots">
+                {recentMedia.map((item, index) => <button type="button" aria-label={`Mostrar ${item.name}`} className={index === activeRecentIndex ? "is-active" : ""} key={item.id} onClick={() => setRecentCarouselIndex(index)} />)}
+              </div>
+            </section>
           )}
 
           {activeNav === "Dispositivos" ? (
@@ -1649,14 +1702,22 @@ async function createFolderIn(parentId: string) {
           </span>
         </footer>
 
-        {settingsOpen && (
-          <div className="tc-settings-backdrop" role="presentation" onMouseDown={() => setSettingsOpen(false)}>
-            <section className="tc-settings-modal web-settings-panel" role="dialog" aria-modal="true" aria-label="Configurações do TCloud" onMouseDown={(event) => event.stopPropagation()}>
+        {settingsOpen && activeNav === "Configurações" && (
+          <div className="tc-settings-backdrop is-workspace" role="presentation">
+            <section className="tc-settings-modal web-settings-panel" aria-label="Configurações do TCloud">
               <header className="tc-settings-modal-header">
                 <div><h2>Preferências</h2><p>Conta, dispositivos e aparência</p></div>
-                <button className="tc-settings-close" type="button" aria-label="Fechar" onClick={() => setSettingsOpen(false)}><X size={18} /></button>
+                <button className="tc-settings-close" type="button" aria-label="Voltar aos arquivos" onClick={() => { setSettingsOpen(false); setActiveNav("Arquivos"); }}><X size={18} /></button>
               </header>
               <TCloudThemeControl />
+              <div className="web-settings-health">
+                <strong>Densidade da interface</strong>
+                <span>Escolha quanto conteúdo aparece na tela.</span>
+                <div className="web-density-options">
+                  <button className={density === "comfortable" ? "is-active" : ""} type="button" onClick={() => setDensity("comfortable")}>Confortável</button>
+                  <button className={density === "compact" ? "is-active" : ""} type="button" onClick={() => setDensity("compact")}>Compacta</button>
+                </div>
+              </div>
               <div className="web-settings-health">
                 <strong>Status avançado</strong>
                 <span>Core: {status.connected ? "conectado" : "offline"}</span>

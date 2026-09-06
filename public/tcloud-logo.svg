@@ -1,7 +1,7 @@
 <svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="256" height="256" rx="56" fill="#F6F1E8"/>
-  <path d="M66 116V103C66 83.67 81.67 68 101 68C107.7 52.2 123.35 41 141.7 41C165.44 41 184.7 60.26 184.7 84C184.7 85.7 184.6 87.37 184.4 89C201.45 90.6 214.8 104.95 214.8 122.4C214.8 129.17 212.78 135.48 209.3 140.75" stroke="#17243A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M56 119H200V196C200 206.493 191.493 215 181 215H75C64.507 215 56 206.493 56 196V119Z" stroke="#17243A" stroke-width="12" stroke-linejoin="round"/>
-  <path d="M56 119H112L121 135H200" stroke="#17243A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="106" y="169" width="44" height="12" rx="6" fill="#C36B4C"/>
+  <rect x="18" y="18" width="220" height="220" rx="30" fill="#11131A"/>
+  <path d="M66 105.5C66 82.58 84.58 64 107.5 64c14.14 0 26.63 7.07 34.13 17.87A38.25 38.25 0 0 1 190 119.5" stroke="#A78BFA" stroke-width="15" stroke-linecap="round"/>
+  <path d="M54 116h148v77c0 9.39-7.61 17-17 17H71c-9.39 0-17-7.61-17-17v-77Z" fill="#191C25" stroke="#E9EAF0" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M54 116h56l13 18h79" stroke="#E9EAF0" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M128 153v35m0-35-14 14m14-14 14 14" stroke="#8B5CF6" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

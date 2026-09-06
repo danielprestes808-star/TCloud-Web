@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "../styles/tcloud-design-system.css";
 import "./globals.css";
+import "./fluent-final.css";
 import TCloudThemeBootstrap from "@/components/TCloudThemeBootstrap";
 import TCloudPwaBootstrap from "@/components/TCloudPwaBootstrap";
 
