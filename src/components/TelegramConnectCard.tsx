@@ -51,6 +51,7 @@ export function TelegramConnectCard() {
     "info" | "success" | "error"
   >("info");
   const [resendSeconds, setResendSeconds] = useState(0);
+  const [sessionReady, setSessionReady] = useState(false);
 
   const stage = manualPhoneMode
     ? "phone-required"
@@ -63,7 +64,13 @@ export function TelegramConnectCard() {
       const response = await fetch("/api/core/auth/status", {
         cache: "no-store",
       });
-      setAuth(await response.json());
+      setSessionReady(response.status !== 401);
+      const result = (await response.json()) as AuthStatus;
+      setAuth(
+        response.status === 401
+          ? { stage: "phone-required", message: "Entre para criar sua conta TCloud." }
+          : result,
+      );
     } catch {
       setAuth({
         stage: "core-offline",
@@ -104,6 +111,29 @@ export function TelegramConnectCard() {
     );
   }
 
+  async function ensureAccountSession() {
+    if (sessionReady) return true;
+
+    const response = await fetch("/api/core/onboarding/register", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        deviceName: navigator.platform
+          ? `Navegador em ${navigator.platform}`
+          : "Navegador Web",
+        appVersion: "0.3.7",
+      }),
+    });
+    const result = (await response.json()) as AuthStatus;
+    if (!response.ok || result.ok === false) {
+      setFeedbackKind("error");
+      setFeedback(result.message ?? "Não foi possível iniciar sua conta.");
+      return false;
+    }
+    setSessionReady(true);
+    return true;
+  }
+
   async function sendPhone(event?: FormEvent) {
     event?.preventDefault();
 
@@ -124,6 +154,7 @@ export function TelegramConnectCard() {
     setFeedback("");
 
     try {
+      if (!(await ensureAccountSession())) return;
       const result = await postJson(
         "/api/core/auth/request-code",
         { phone: cleanPhone },
