@@ -43,3 +43,8 @@ next-env.d.ts
 .env.local
 node_modules
 .next
+
+# Local browser verification artifacts
+/.chrome-*/
+/*visual-check*.png
+/after-*.png
