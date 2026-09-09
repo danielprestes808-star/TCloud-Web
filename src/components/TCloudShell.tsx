@@ -443,6 +443,10 @@ export function TCloudShell() {
   }, [indexBusy, loadAll, mutationBusy]);
 
   useEffect(() => {
+    // A tela offline/login não deve consumir o orçamento de requisições do
+    // Core. A revisão ao vivo só tem utilidade depois da sessão estar pronta.
+    if (!status.connected || !auth.authorized) return;
+
     let cancelled = false;
     let inFlight = false;
 
@@ -507,7 +511,7 @@ export function TCloudShell() {
       document.removeEventListener("visibilitychange", visible);
       window.removeEventListener("online", visible);
     };
-  }, [indexBusy, loadAll, mutationBusy]);
+  }, [auth.authorized, indexBusy, loadAll, mutationBusy, status.connected]);
 
   useEffect(() => {
     if (!indexBusy) return;
