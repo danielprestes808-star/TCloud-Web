@@ -268,6 +268,7 @@ export function TCloudShell() {
   const [uploadParentId, setUploadParentId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const liveRevisionRef = useRef<string | null>(null);
+  const liveBackoffUntilRef = useRef(0);
 
   const openItem = useCallback((item: TCloudItem) => {
     if (item.kind === "folder") {
@@ -455,7 +456,8 @@ export function TCloudShell() {
         cancelled ||
         inFlight ||
         mutationBusy ||
-        indexBusy
+        indexBusy ||
+        Date.now() < liveBackoffUntilRef.current
       ) {
         return;
       }
@@ -468,7 +470,18 @@ export function TCloudShell() {
           { cache: "no-store" },
         );
 
+        if (response.status === 429) {
+          const retryAfter = Number(response.headers.get("retry-after") ?? "60");
+          const seconds = Number.isFinite(retryAfter)
+            ? Math.max(15, Math.min(retryAfter, 300))
+            : 60;
+          liveBackoffUntilRef.current = Date.now() + seconds * 1000;
+          return;
+        }
+
         if (!response.ok) return;
+
+        liveBackoffUntilRef.current = 0;
 
         const data = (await response.json()) as {
           revision?: string;
@@ -493,7 +506,7 @@ export function TCloudShell() {
 
     const timer = window.setInterval(
       () => void checkRevision(),
-      document.visibilityState === "visible" ? 5000 : 30000,
+      document.visibilityState === "visible" ? 15000 : 60000,
     );
 
     const visible = () => {
