@@ -4,3 +4,42 @@
 @media(max-width:920px){.tc-settings-backdrop.is-workspace{left:0!important}}
 .web-density-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.web-density-options button{min-height:38px;border:1px solid var(--tc-border);border-radius:6px;background:var(--tc-surface-2);color:inherit}.web-density-options button.is-active{border-color:var(--tc-primary);background:color-mix(in srgb,var(--tc-primary) 14%,var(--tc-surface-2))}
 :root[data-density="compact"] .web-nav button{height:34px!important;min-height:34px!important}:root[data-density="compact"] .web-content{padding:16px!important}:root[data-density="compact"] .web-file-grid{gap:8px!important;grid-template-columns:repeat(auto-fill,minmax(185px,1fr))}:root[data-density="compact"] .web-file-preview{height:124px!important}
+
+/* Final ecosystem frame: black + deep blue, compact Windows geometry. */
+:root{
+  --tc-bg:#070b12;
+  --tc-surface:#0b1220;
+  --tc-surface-soft:#101827;
+  --tc-surface-2:#101827;
+  --tc-surface-raised:#152033;
+  --tc-border:#1f304a;
+  --tc-border-strong:#2c4770;
+  --tc-text:#eef4ff;
+  --tc-text-secondary:#9aaac1;
+  --tc-text-muted:#6f819b;
+  --tc-primary:#2563eb;
+  --tc-primary-hover:#3b82f6;
+  --tc-primary-soft:rgb(37 99 235/.16);
+  --tc-sidebar-width:248px;
+}
+.tcloud-web-app :is(button,input,select,textarea,.web-file-card,.web-device-grid>*,.web-storage-dashboard>*,.tc-settings-modal){border-radius:4px!important;box-shadow:none!important}
+.web-sidebar{width:var(--tc-sidebar-width)!important;min-width:var(--tc-sidebar-width)!important;padding:12px 10px!important;background:var(--tc-surface)!important;background-image:none!important;backdrop-filter:none!important}
+.web-brand{min-height:64px!important;border-color:var(--tc-border)!important}
+.web-primary-create{height:40px!important;margin:10px 0 14px!important;border-color:var(--tc-border)!important;background:var(--tc-primary)!important;color:#fff!important;box-shadow:none!important}
+.web-nav button{min-height:36px!important;border-radius:3px!important}
+.web-nav button.is-active,.web-settings-button.is-active{background:var(--tc-primary-soft)!important;color:var(--tc-text)!important}
+.web-workspace{background:var(--tc-bg)!important}
+.web-topbar,.web-commandbar{background:var(--tc-surface)!important;background-image:none!important;backdrop-filter:none!important;border-color:var(--tc-border)!important}
+.web-topbar{min-height:52px!important}.web-commandbar{min-height:42px!important}
+.web-search{height:34px!important;border:1px solid var(--tc-border)!important;background:var(--tc-surface-soft)!important}
+.web-content{padding:20px 24px 32px!important}
+.web-workspace-hero{border-color:var(--tc-border)!important;border-radius:4px!important;background:var(--tc-surface-soft)!important;background-image:none!important;box-shadow:none!important}
+.web-file-grid{align-items:stretch!important;grid-auto-rows:1fr!important;gap:10px!important}
+.web-file-card,.web-device-grid>button,.web-storage-dashboard>*{height:100%;border-color:var(--tc-border)!important;background:var(--tc-surface-soft)!important}
+.web-file-card:hover,.web-device-grid>button:hover{transform:none!important;border-color:var(--tc-border-strong)!important;background:var(--tc-surface-raised)!important}
+.web-file-card.is-folder .web-file-preview{background:var(--tc-surface-raised)!important;background-image:none!important}
+.web-brand-mark,.web-device-illustration,.web-device-illustration.is-phone{border-radius:4px!important;background:var(--tc-primary-soft)!important;color:var(--tc-primary-hover)!important}
+.web-pairing-qr{border:1px solid var(--tc-border)!important;border-radius:4px!important}
+.tc-settings-backdrop.is-workspace{left:var(--tc-sidebar-width)!important;background:var(--tc-bg)!important}
+.tc-settings-backdrop.is-workspace .tc-settings-modal-header{background:var(--tc-bg)!important;border-bottom:1px solid var(--tc-border)!important;backdrop-filter:none!important}
+@media(max-width:920px){:root{--tc-sidebar-width:0px}.tcloud-web-app{display:block!important}.web-sidebar{position:relative!important;width:100%!important;min-width:0!important;height:auto!important}.web-content{padding:16px!important}}
